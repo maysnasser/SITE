@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>بلدية نعلين | التحليل الذكي للمياه والنفايات - نظام الصور المتكامل V18</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-deep: #03050b;
+            --bg-luxury: #070b1a;
+            --card-premium: rgba(8, 12, 24, 0.96);
+            --glass-border: rgba(212, 175, 55, 0.2);
+            --gold-primary: #d4af37;
+            --gold-light: #e8c84a;
+            --gold-pale: #f5e6b0;
+            --gold-dark: #8a6318;
+            --accent-teal: #2dd4bf;
+            --accent-rose: #f43f5e;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --text-gold: #eed98a;
+            --text-light: #e8edf5;
+            --text-muted: #7b8fa8;
+            --blur-strong: blur(22px) saturate(1.5);
+            --radius-lg: 20px;
+        }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-deep); color: var(--text-light); overflow: hidden; height: 100vh; display: flex; flex-direction: row; }
+        body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 900px 600px at 20% 50%, rgba(212,175,55,0.025) 0%, transparent 70%), radial-gradient(ellipse 600px 400px at 80% 20%, rgba(45,212,191,0.018) 0%, transparent 60%); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--gold-primary), var(--gold-dark)); border-radius: 10px; }
+
+        /* ==========================================
+           بوابة الدخول - Landing Screen
+        ========================================== */
+        #landingScreen {
+            position: fixed; inset: 0; z-index: 99999;
+            background: radial-gradient(ellipse 1200px 800px at 50% 20%, rgba(212,175,55,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse 800px 600px at 20% 80%, rgba(45,212,191,0.06) 0%, transparent 60%),
+                        linear-gradient(135deg, #03050b 0%, #070b1a 50%, #03050b 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow-y: auto; padding: 30px 20px 70px;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #landingScreen.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .landing-bg-decor {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: 
+                radial-gradient(circle at 15% 25%, rgba(212,175,55,0.06) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(45,212,191,0.05) 0%, transparent 40%);
+        }
+        .landing-bg-decor::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: 
+                linear-gradient(rgba(212,175,55,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212,175,55,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+        }
+
+        .landing-content {
+            position: relative; z-index: 2; max-width: 920px; width: 100%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .landing-logo {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.05));
+            border: 2px solid var(--gold-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.6rem; color: var(--gold-primary);
+            box-shadow: 0 0 40px rgba(212,175,55,0.3), inset 0 0 20px rgba(212,175,55,0.1);
+            margin-bottom: 18px;
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); box-shadow: 0 0 40px rgba(212,175,55,0.3), inset 0 0 20px rgba(212,175,55,0.1); }
+            50% { transform: translateY(-8px); box-shadow: 0 0 60px rgba(212,175,55,0.5), inset 0 0 25px rgba(212,175,55,0.15); }
+        }
+
+        .landing-title {
+            font-size: 1.9rem; font-weight: 900; text-align: center; line-height: 1.3;
+            background: linear-gradient(135deg, #f0d060 0%, #d4af37 40%, #e8c84a 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            margin-bottom: 6px; letter-spacing: 0.3px;
+            text-shadow: 0 0 30px rgba(212,175,55,0.25);
+        }
+        .landing-subtitle {
+            font-size: 0.92rem; color: var(--text-gold); font-weight: 700;
+            text-align: center; margin-bottom: 6px; opacity: 0.9;
+        }
+        .landing-tagline {
+            font-size: 0.78rem; color: var(--text-muted); text-align: center;
+            margin-bottom: 26px; max-width: 600px; line-height: 1.7;
+        }
+
+        .landing-divider {
+            width: 120px; height: 2px; margin: 0 auto 26px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            position: relative;
+        }
+        .landing-divider::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--gold-primary);
+            box-shadow: 0 0 12px var(--gold-primary);
+        }
+
+        .landing-cards {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+            width: 100%; margin-bottom: 24px;
+        }
+        @media (max-width: 780px) { .landing-cards { grid-template-columns: 1fr; } }
+
+        .landing-card {
+            background: linear-gradient(160deg, rgba(10,14,28,0.95), rgba(6,9,18,0.98));
+            border: 1px solid rgba(212,175,55,0.25);
+            border-radius: 18px; padding: 18px 16px;
+            position: relative; overflow: hidden;
+            transition: all 0.35s ease;
+            backdrop-filter: blur(10px);
+        }
+        .landing-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            opacity: 0.6;
+        }
+        .landing-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(212,175,55,0.6);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 20px rgba(212,175,55,0.15);
+        }
+        .landing-card-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.04));
+            border: 1px solid rgba(212,175,55,0.35);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold-primary); font-size: 1.1rem; margin-bottom: 12px;
+        }
+        .landing-card-title {
+            font-size: 0.86rem; font-weight: 800; color: var(--gold-light);
+            margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+        }
+        .landing-card-text {
+            font-size: 0.72rem; color: #a0aec0; line-height: 1.75;
+        }
+
+        .data-notice-box {
+            background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(59,130,246,0.05));
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 16px; padding: 16px 20px; margin-bottom: 22px;
+            width: 100%; display: flex; gap: 14px; align-items: flex-start;
+        }
+        .data-notice-icon {
+            width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.05));
+            border: 1px solid rgba(212,175,55,0.4);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold-primary); font-size: 1rem;
+        }
+        .data-notice-title {
+            font-size: 0.82rem; font-weight: 800; color: var(--gold-light); margin-bottom: 4px;
+        }
+        .data-notice-text {
+            font-size: 0.72rem; color: #a0aec0; line-height: 1.7;
+        }
+        .data-notice-text strong { color: var(--gold-primary); }
+
+        .stats-note {
+            background: rgba(245,158,11,0.08);
+            border: 1px dashed rgba(245,158,11,0.4);
+            border-radius: 12px; padding: 10px 16px; margin-bottom: 22px;
+            width: 100%; font-size: 0.7rem; color: #fcd34d;
+            display: flex; gap: 10px; align-items: flex-start; line-height: 1.7;
+        }
+        .stats-note i { color: var(--accent-amber); margin-top: 2px; flex-shrink: 0; }
+        .stats-note strong { color: #fde68a; }
+
+        .landing-actions {
+            display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+            width: 100%; margin-bottom: 26px;
+        }
+        .landing-btn {
+            padding: 14px 34px; border-radius: 50px;
+            font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 800;
+            cursor: pointer; transition: all 0.3s ease; border: 2px solid;
+            display: inline-flex; align-items: center; gap: 10px;
+            letter-spacing: 0.3px;
+        }
+        .landing-btn-primary {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            border-color: var(--gold-light);
+            color: #06090f;
+            box-shadow: 0 6px 25px rgba(212,175,55,0.4);
+        }
+        .landing-btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 35px rgba(212,175,55,0.6);
+            background: linear-gradient(135deg, #e8c84a, #b8932a);
+        }
+        .landing-btn-secondary {
+            background: rgba(0,0,0,0.4);
+            border-color: rgba(212,175,55,0.4);
+            color: var(--gold-light);
+        }
+        .landing-btn-secondary:hover {
+            background: rgba(212,175,55,0.12);
+            border-color: var(--gold-primary);
+            transform: translateY(-3px);
+        }
+        .landing-btn i { font-size: 1rem; }
+
+        .landing-footer-note {
+            font-size: 0.7rem; color: #7b8fa8; text-align: center;
+            max-width: 700px; line-height: 1.8;
+            padding: 14px 18px; border-radius: 12px;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(212,175,55,0.15);
+        }
+        .landing-footer-note strong { color: var(--gold-primary); }
+        .landing-copyright {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(3,5,11,0.95); backdrop-filter: blur(14px);
+            border-top: 1px solid rgba(212,175,55,0.35);
+            padding: 8px 16px; display: flex; justify-content: center; align-items: center;
+            gap: 8px; font-size: 0.68rem; color: var(--text-muted); z-index: 3;
+        }
+        .landing-copyright .copyright-name { color: var(--gold-primary); font-weight: 800; }
+        .landing-copyright .copyright-icon { color: var(--gold-primary); }
+
+        .home-back-btn {
+            position: fixed; top: 12px; left: 12px; z-index: 1500;
+            background: rgba(8,12,24,0.9); backdrop-filter: blur(12px);
+            border: 1px solid rgba(212,175,55,0.5); border-radius: 50px;
+            padding: 6px 14px; color: var(--gold-light); font-size: 0.68rem;
+            font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;
+            font-family: 'Cairo', sans-serif; transition: 0.25s;
+        }
+        .home-back-btn:hover { background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); color: #06090f; }
+
+        /* ================== باقي تنسيقات النظام ================== */
+        .dashboard-wrapper {
+            position: relative; width: 660px; min-width: 360px; max-width: 1000px; z-index: 20;
+            background: linear-gradient(180deg, rgba(6,9,18,0.98) 0%, rgba(8,11,22,0.96) 100%);
+            backdrop-filter: var(--blur-strong); border-right: 1px solid rgba(212,175,55,0.2);
+            display: flex; flex-direction: column; overflow: hidden;
+            transition: width 0.1s ease, margin-right 0.3s ease;
+        }
+        .dashboard-wrapper.collapsed { margin-right: -660px; width: 0 !important; min-width: 0 !important; border-right: none; }
+        .resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); cursor: ew-resize; z-index: 100; opacity: 0.6; transition: opacity 0.2s; }
+        .resize-handle:hover { opacity: 1; }
+        .dashboard-wrapper.collapsed .resize-handle { display: none; }
+
+        .toggle-dashboard-btn {
+            position: fixed; left: 10px; top: 50%; transform: translateY(-50%); z-index: 1000;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); border: none;
+            border-radius: 30px; width: 40px; height: 80px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            color: #06090f; font-size: 1.2rem; writing-mode: vertical-rl; text-orientation: mixed;
+        }
+        .toggle-dashboard-btn:hover { background: linear-gradient(135deg, #e8c84a, #b8932a); transform: translateY(-50%) scale(1.05); width: 45px; }
+        body:has(.dashboard-wrapper.collapsed) .toggle-dashboard-btn i { transform: rotate(180deg); }
+
+        .map-wrapper { flex: 1; position: relative; background: #02040a; z-index: 1; transition: all 0.3s ease; }
+        #map { width: 100%; height: 100%; z-index: 1; filter: brightness(0.85) contrast(1.15) saturate(1.1); }
+
+        .glass-ctrl { position: absolute; top: 25px; right: 25px; z-index: 500; display: flex; flex-direction: column; gap: 12px; }
+        .glass-btn { width: 48px; height: 48px; background: rgba(8,12,24,0.88); backdrop-filter: var(--blur-strong); border: 1px solid rgba(212,175,55,0.5); border-radius: 50%; color: var(--gold-primary); font-size: 1.1rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .glass-btn:hover { background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); color: #06090f; transform: scale(1.1); }
+
+        .layer-switcher { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); background: rgba(6,9,20,0.92); backdrop-filter: var(--blur-strong); border-radius: 60px; padding: 5px 22px; display: flex; gap: 10px; border: 1px solid rgba(212,175,55,0.4); z-index: 500; }
+        .layer-option { background: transparent; border: none; color: var(--text-muted); font-weight: 600; font-size: 0.82rem; padding: 9px 16px; border-radius: 50px; display: flex; align-items: center; gap: 7px; cursor: pointer; transition: all 0.25s; font-family: 'Cairo', sans-serif; }
+        .layer-option.active { background: linear-gradient(135deg, var(--gold-primary) 0%, #b8932a 100%); color: #06090f; box-shadow: 0 4px 16px rgba(212,175,55,0.45); font-weight: 800; }
+
+        .legend-left { background: rgba(6,9,20,0.94); backdrop-filter: var(--blur-strong); border: 1px solid rgba(212,175,55,0.3); border-radius: 16px; padding: 12px 14px; margin-top: 12px; width: 100%; }
+        .legend-title { font-size: 0.7rem; font-weight: 800; color: var(--gold-primary); margin-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 0.68rem; color: var(--text-muted); }
+        .legend-icon { width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+
+        .waste-control-panel { width: 100%; margin-bottom: 12px; }
+        .wcp-box { background: rgba(5,7,18,0.94); backdrop-filter: blur(22px) saturate(1.4); border: 1px solid rgba(212,175,55,0.28); border-radius: 18px; padding: 14px 14px 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .wcp-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .wcp-header-icon { width: 28px; height: 28px; border-radius: 10px; background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.05)); border: 1px solid rgba(212,175,55,0.3); display: flex; align-items: center; justify-content: center; color: var(--gold-primary); }
+        .wcp-title { font-size: 0.78rem; font-weight: 800; color: var(--text-gold); }
+        .wcp-section-sep { height: 1px; margin: 8px 0; background: rgba(255,255,255,0.05); }
+        .wcp-section-label { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; font-weight: 800; color: var(--gold-primary); margin-bottom: 6px; }
+        .wcp-toggles { display: flex; flex-direction: column; gap: 5px; }
+        .wcp-btn { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.025); font-family: 'Cairo', sans-serif; font-size: 0.7rem; font-weight: 700; transition: all 0.25s; width: 100%; text-align: right; color: rgba(255,255,255,0.35); }
+        .wcp-btn.active { background: rgba(212,175,55,0.15); border-color: rgba(212,175,55,0.5); color: var(--gold-light); }
+        .layer-dot { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; display:flex;align-items:center;justify-content:center;font-size:9px; }
+
+        .side-modal { position: fixed; top: 0; left: -700px; width: 700px; height: 100%; background: rgba(6,9,20,0.98); backdrop-filter: blur(32px); border-right: 2px solid rgba(212,175,55,0.6); z-index: 2000; transition: left 0.4s cubic-bezier(0.2,0.9,0.4,1.2); display: flex; flex-direction: column; box-shadow: 20px 0 70px rgba(0,0,0,0.9); border-radius: 0 28px 28px 0; }
+        .side-modal.open { left: 0; }
+        .side-modal-header { padding: 18px 22px; background: linear-gradient(135deg, #0f1322, #050814); border-bottom: 2px solid var(--gold-primary); border-radius: 0 28px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .side-modal-header h3 { color: var(--gold-light); font-weight: 800; margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 12px; }
+        .side-modal-header button { background: none; border: none; font-size: 26px; cursor: pointer; color: #9ca3af; transition: 0.2s; }
+        .side-modal-header button:hover { color: var(--accent-rose); }
+        .side-modal-meta { padding: 8px 18px; background: rgba(212,175,55,0.05); border-bottom: 1px solid rgba(212,175,55,0.15); font-size: 0.7rem; color: var(--text-muted); display: flex; gap: 20px; flex-wrap: wrap; }
+        .side-table-wrapper { flex: 1; overflow: auto; padding: 0; }
+        .detail-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; }
+        .detail-table th { color: var(--gold-primary); font-weight: 800; background: rgba(10,13,26,0.95); position: sticky; top: 0; padding: 8px 6px; border-bottom: 2px solid rgba(212,175,55,0.3); white-space: nowrap; }
+        .detail-table td { border-bottom: 1px solid rgba(212,175,55,0.08); padding: 6px 6px; color: var(--text-light); }
+        .detail-table tr:hover td { background: rgba(212,175,55,0.04); }
+        .locate-sm-btn { background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.1)); border: 1px solid var(--gold-primary); color: var(--gold-light); padding: 3px 8px; border-radius: 40px; font-size: 0.6rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
+
+        .dashboard { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+        .dashboard-header { background: linear-gradient(120deg, rgba(10,14,28,0.98) 0%, rgba(20,25,45,0.98) 60%); padding: 16px 20px 12px; border-bottom: 1px solid rgba(212,175,55,0.2); }
+        .dashboard-header h1 { font-size: 1rem; font-weight: 900; display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #f0d060, #d4af37); -webkit-background-clip: text; background-clip: text; color: transparent; margin:0; }
+        .content { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+        .search-bar { background: rgba(0,0,0,0.35); border-radius: 40px; padding: 6px 16px; display: flex; gap: 10px; border: 1px solid rgba(212,175,55,0.3); margin-bottom: 4px; }
+        input#searchInputDashboard { background: transparent; border: none; color: var(--text-light); font-size: 0.8rem; flex: 1; outline: none; font-family: 'Cairo', sans-serif; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 4px; }
+        .stat-card { background: linear-gradient(145deg, rgba(16,22,42,0.9), rgba(10,14,28,0.95)); border: 1px solid rgba(212,175,55,0.2); border-radius: 14px; padding: 8px 4px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .stat-card:hover { border-color: rgba(212,175,55,0.55); transform: translateY(-2px); }
+        .stat-card-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .stat-number { font-size: 1.2rem; font-weight: 900; margin-top: 4px; background: linear-gradient(135deg, #f0d060, #d4af37); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.2; }
+        .total-loss-stat { background: linear-gradient(145deg, rgba(212,175,55,0.2), rgba(212,175,55,0.05)); border: 2px solid var(--gold-primary); }
+        .total-loss-stat .stat-number { font-size: 1.4rem; }
+        .locked-stat .stat-number { color: #fca5a5 !important; -webkit-text-fill-color: #fca5a5 !important; font-size: 0.9rem !important; display: flex; align-items: center; justify-content: center; gap: 4px; }
+
+        .stat-card.restricted-stat { position: relative; }
+        .stat-card.restricted-stat .stat-number.restricted {
+            color: #fca5a5 !important; -webkit-text-fill-color: #fca5a5 !important;
+            font-size: 0.78rem !important;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        .stat-card.restricted-stat .stat-number.restricted:hover { background: rgba(239,68,68,0.1); }
+        .stat-card.restricted-stat .stat-number.restricted i { font-size: 0.75rem; }
+
+        .chart-container { background: linear-gradient(145deg, rgba(14,19,36,0.92), rgba(10,14,28,0.95)); border: 1px solid rgba(212,175,55,0.18); border-radius: 18px; padding: 14px; }
+        .section-title { font-weight: 800; margin-bottom: 12px; border-right: 3px solid var(--gold-primary); padding-right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-gold); }
+        .waste-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+        .waste-stat { background: linear-gradient(145deg, rgba(0,0,0,0.4), rgba(6,9,18,0.5)); border-radius: 14px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; border-right: 3px solid var(--accent-teal); }
+        .waste-stat.without { border-right-color: #ef4444; }
+        .waste-stat.with { border-right-color: var(--accent-green); }
+        .waste-stat-value { font-size: 1.4rem; font-weight: 900; color: var(--gold-primary); }
+        .waste-stat-value.restricted {
+            color: #fca5a5 !important;
+            font-size: 0.85rem !important;
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px; border-radius: 10px;
+            transition: 0.2s;
+        }
+        .waste-stat-value.restricted:hover { background: rgba(239,68,68,0.12); }
+        .waste-stat-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+        .waste-stat-percent { font-size: 0.7rem; font-weight: 700; }
+        .highlight-box { background: rgba(212,175,55,0.07); border: 1px dashed rgba(212,175,55,0.4); border-radius: 10px; padding: 6px; text-align: center; margin-top: 8px; font-size: 0.7rem; color: var(--text-gold); position: relative; }
+        .highlight-box.locked-box { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.4); cursor: pointer; }
+        .highlight-box.locked-box:hover { background: rgba(239,68,68,0.12); }
+        .gap-locked { display: inline-flex; align-items: center; gap: 4px; color: #fca5a5; font-weight: 700; font-size: 0.7rem; }
+        .gap-locked i { font-size: 0.75rem; }
+        .gap-unlocked { color: var(--gold-primary); font-weight: 800; }
+        .chart-main { max-height: 200px; width: 100%; }
+        .flex-export-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .small-export-btn { background: rgba(0,0,0,0.5); border: 1px solid rgba(212,175,55,0.4); border-radius: 20px; padding: 4px 10px; font-size: 0.65rem; font-weight: 600; color: var(--gold-light); cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .small-export-btn:hover { background: rgba(212,175,55,0.2); border-color: var(--gold-primary); }
+        .small-export-btn.locked-export { opacity: 0.5; cursor: not-allowed; border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+        .small-export-btn.locked-export:hover { background: rgba(239,68,68,0.1); transform: none; }
+
+        .enhanced-popup .leaflet-popup-content-wrapper {
+            background: linear-gradient(160deg, #0a0e1c 0%, #060914 100%);
+            border-radius: 22px;
+            border: 2px solid var(--gold-primary);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 30px rgba(212,175,55,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 0; overflow: hidden; max-width: 460px; min-width: 340px;
+        }
+        .enhanced-popup .leaflet-popup-tip {
+            background: var(--gold-primary);
+            border-top: 2px solid var(--gold-light);
+        }
+        .enhanced-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
+
+        .popup-container { font-family: 'Cairo', sans-serif; direction: rtl; }
+
+        .popup-header {
+            background: linear-gradient(135deg, #12182b 0%, #080c18 100%);
+            padding: 14px 16px 12px;
+            border-bottom: 2px solid var(--gold-primary);
+            position: relative; overflow: hidden;
+        }
+        .popup-header::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(212,175,55,0.12) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .popup-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; z-index: 1; }
+        .popup-title {
+            color: var(--gold-light); font-size: 1rem; margin: 0;
+            display: flex; align-items: center; gap: 8px; font-weight: 900;
+            text-shadow: 0 1px 8px rgba(212,175,55,0.4);
+        }
+        .popup-title i { color: var(--gold-primary); }
+
+        .popup-status-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; position: relative; z-index: 1; }
+        .popup-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 11px; border-radius: 20px; font-size: 0.66rem; font-weight: 800;
+            border: 1px solid;
+        }
+        .popup-badge.badge-water { background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #93c5fd; }
+        .popup-badge.badge-danger { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #fca5a5; }
+        .popup-badge.badge-safe { background: rgba(16,185,129,0.15); border-color: #10b981; color: #6ee7b7; }
+        .popup-badge.badge-auth { background: rgba(16,185,129,0.2); border-color: #10b981; color: #6ee7b7; }
+        .popup-badge.badge-lock { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+
+        .popup-image-area {
+            width: 100%; max-height: 210px; overflow: hidden;
+            position: relative; cursor: pointer; background: #0f172a;
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+        .popup-image { width: 100%; height: 190px; object-fit: cover; transition: transform 0.4s ease; display: block; }
+        .popup-image-area:hover .popup-image { transform: scale(1.05); }
+        .popup-image-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+            padding: 10px 8px 6px; text-align: center; color: var(--gold-light);
+            font-size: 0.7rem; display: flex; align-items: center; justify-content: center; gap: 6px;
+            font-weight: 700;
+        }
+        .popup-no-image {
+            width: 100%; height: 130px;
+            background: linear-gradient(145deg, #1a2338, #0f172a);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; color: #64748b; border-bottom: 1px solid rgba(212,175,55,0.15);
+        }
+        .popup-no-image i { font-size: 1.8rem; opacity: 0.5; }
+        .popup-no-image span { font-size: 0.7rem; }
+
+        .popup-details {
+            padding: 14px 16px;
+            max-height: 260px;
+            overflow-y: auto;
+            background: rgba(6,9,20,0.98);
+        }
+        .popup-details::-webkit-scrollbar { width: 4px; }
+        .popup-details::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.5); border-radius: 10px; }
+
+        .popup-info-grid { display: flex; flex-direction: column; gap: 6px; }
+        .popup-info-item {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; padding: 7px 10px; border-radius: 10px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(212,175,55,0.08);
+            font-size: 0.72rem;
+            transition: all 0.2s;
+        }
+        .popup-info-item:hover { background: rgba(212,175,55,0.06); border-color: rgba(212,175,55,0.2); }
+        .popup-info-label {
+            display: flex; align-items: center; gap: 6px;
+            color: var(--gold-primary); font-weight: 700; flex-shrink: 0;
+        }
+        .popup-info-label i { font-size: 0.7rem; opacity: 0.8; }
+        .popup-info-value { color: var(--text-light); font-weight: 600; text-align: left; }
+
+        .popup-locked-area {
+            padding: 22px 16px 18px;
+            text-align: center;
+            background: linear-gradient(160deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02));
+            border-top: 1px dashed rgba(239,68,68,0.35);
+            border-bottom: 1px dashed rgba(239,68,68,0.35);
+        }
+        .popup-locked-icon {
+            width: 48px; height: 48px; margin: 0 auto 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(239,68,68,0.25), rgba(239,68,68,0.05));
+            border: 2px solid rgba(239,68,68,0.5);
+            display: flex; align-items: center; justify-content: center;
+            color: #fca5a5; font-size: 1.2rem;
+            animation: lockPulse 2s infinite;
+        }
+        @keyframes lockPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+        }
+        .popup-locked-title { color: #fca5a5; font-size: 0.8rem; font-weight: 800; margin-bottom: 4px; }
+        .popup-locked-sub { color: #94a3b8; font-size: 0.65rem; line-height: 1.6; margin-bottom: 12px; }
+        .popup-unlock-btn {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            border: none; color: white; padding: 7px 20px; border-radius: 25px;
+            font-family: 'Cairo', sans-serif; font-size: 0.72rem; font-weight: 800;
+            cursor: pointer; transition: all 0.25s;
+            box-shadow: 0 4px 14px rgba(239,68,68,0.35);
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .popup-unlock-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(239,68,68,0.5); }
+
+        .popup-actions {
+            padding: 10px 14px;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.25));
+            border-top: 1px solid rgba(212,175,55,0.2);
+            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+        }
+        .popup-btn {
+            background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+            border: 1px solid var(--gold-primary);
+            padding: 6px 13px; border-radius: 20px; font-size: 0.66rem; font-weight: 700;
+            cursor: pointer; transition: all 0.22s; color: var(--gold-light);
+            display: inline-flex; align-items: center; gap: 5px;
+            font-family: 'Cairo', sans-serif;
+        }
+        .popup-btn:hover {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            color: #06090f; transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212,175,55,0.4);
+        }
+        .popup-btn.danger { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,0.1); }
+        .popup-btn.danger:hover { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
+
+        #photosPanel { position: fixed; top: 0; right: -450px; width: 420px; height: 100%; background: rgba(6, 9, 20, 0.98); backdrop-filter: blur(32px); z-index: 1500; transition: right 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); overflow-y: auto; border-left: 3px solid #8b5cf6; box-shadow: -5px 0 30px rgba(0, 0, 0, 0.8); }
+        #photosPanel.active { right: 0; }
+        .photos-header { background: linear-gradient(135deg, #0f1322, #050814); padding: 20px 25px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #8b5cf6; }
+        .photos-header h2 { margin: 0; font-size: 1.2rem; color: #a78bfa; display: flex; align-items: center; gap: 10px; }
+        .close-photos { background: rgba(139, 92, 246, 0.1); border: 2px solid #8b5cf6; color: #8b5cf6; width: 40px; height: 40px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; transition: all 0.3s; }
+        .close-photos:hover { background: #8b5cf6; color: #0f172a; transform: rotate(90deg); }
+        .photos-content { padding: 25px; }
+        .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-height: 80vh; overflow-y: auto; }
+        .photo-card { background: rgba(30, 41, 59, 0.8); border-radius: 12px; overflow: hidden; border: 2px solid rgba(139, 92, 246, 0.3); transition: all 0.3s; cursor: pointer; }
+        .photo-card:hover { transform: translateY(-5px); border-color: #a78bfa; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2); }
+        .photo-thumb { width: 100%; height: 140px; object-fit: cover; background: #1e293b; }
+        .photo-info { padding: 10px; text-align: center; color: #cbd5e1; }
+        .photo-building-id { color: #a78bfa; font-weight: bold; font-size: 1rem; }
+        .photo-stats { font-size: 0.7rem; color: #94a3b8; }
+
+        #imgModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:16px; backdrop-filter:blur(8px); }
+        #imgModal.open { display:flex; }
+        #imgModal img { max-width:90vw; max-height:85vh; border-radius:16px; border:3px solid #d4af37; box-shadow:0 0 60px rgba(212,175,55,0.5); }
+        .img-modal-close { position:absolute; top:20px; left:30px; font-size:2rem; color:#fff; cursor:pointer; background:rgba(0,0,0,0.6); border:2px solid #d4af37; border-radius:50%; width:48px; height:48px; display:flex; align-items:center; justify-content:center; transition:0.2s; }
+        .img-modal-close:hover { background:#d4af37; color:#000; }
+        .img-modal-label { color:#d4af37; font-size:1rem; font-family:'Cairo',sans-serif; background:rgba(0,0,0,0.7); padding:6px 16px; border-radius:40px; }
+
+        .secret-locked { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05)); border: 1px dashed rgba(239,68,68,0.5); border-radius: 20px; padding: 2px 8px; font-size: 0.6rem; color: #fca5a5; cursor: pointer; font-weight: 700; white-space: nowrap; transition: all 0.2s; }
+        .secret-locked:hover { background: rgba(239,68,68,0.25); border-color: #ef4444; }
+        .secret-locked i { font-size: 0.7rem; }
+
+        #authModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 10000; align-items: center; justify-content: center; }
+        #authModal.open { display: flex; }
+        .auth-box { background: linear-gradient(145deg, #0a0e1c, #060914); border: 2px solid var(--gold-primary); border-radius: 24px; padding: 30px 40px; text-align: center; max-width: 380px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.9); position: relative; }
+        .auth-box h3 { color: var(--gold-light); font-size: 1.1rem; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .auth-box p { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 18px; line-height: 1.6; }
+        .auth-box input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(212,175,55,0.4); background: rgba(0,0,0,0.4); color: var(--text-light); font-family: 'Cairo', sans-serif; font-size: 0.85rem; outline: none; margin-bottom: 14px; text-align: center; }
+        .auth-box input:focus { border-color: var(--gold-primary); }
+        .auth-box button { background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); color: #06090f; border: none; padding: 10px 28px; border-radius: 30px; font-weight: 800; font-family: 'Cairo', sans-serif; font-size: 0.85rem; cursor: pointer; transition: 0.25s; }
+        .auth-box button:hover { transform: scale(1.04); }
+        .auth-error { color: #ef4444; font-size: 0.72rem; margin-top: 10px; min-height: 18px; }
+        .auth-close { position: absolute; top: 14px; left: 16px; background: none; border: none; color: #9ca3af; font-size: 1.4rem; cursor: pointer; }
+        .auth-close:hover { color: #ef4444; }
+
+        .auth-active-badge { position: fixed; bottom: 20px; right: 20px; z-index: 5000; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.5); border-radius: 30px; padding: 6px 16px; font-size: 0.7rem; color: #6ee7b7; font-weight: 700; display: none; align-items: center; gap: 6px; backdrop-filter: blur(10px); }
+        .auth-active-badge.show { display: flex; }
+        .auth-active-badge i { font-size: 0.8rem; }
+
+        .loss-locked-overlay { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.75rem; color: #fca5a5; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 8px; transition: 0.2s; }
+        .loss-locked-overlay:hover { background: rgba(239,68,68,0.1); }
+        .loss-locked-overlay i { font-size: 0.9rem; }
+
+        .site-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: linear-gradient(90deg, rgba(3,5,11,0.92), rgba(10,14,28,0.92)); border-top: 1px solid rgba(212,175,55,0.35); backdrop-filter: blur(14px); padding: 6px 16px; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 0.68rem; color: var(--text-muted); pointer-events: auto; }
+        .site-footer .copyright-name { color: var(--gold-primary); font-weight: 800; letter-spacing: 0.3px; }
+        .site-footer .copyright-icon { color: var(--gold-primary); font-size: 0.75rem; }
+        .site-footer .copyright-sep { opacity: 0.4; margin: 0 4px; }
+
+        .global-stats-notice {
+            background: rgba(245,158,11,0.08);
+            border: 1px dashed rgba(245,158,11,0.4);
+            border-radius: 12px; padding: 10px 14px;
+            font-size: 0.68rem; color: #fcd34d;
+            display: flex; gap: 8px; align-items: flex-start; line-height: 1.65;
+            margin-bottom: 4px;
+        }
+        .global-stats-notice i { color: var(--accent-amber); margin-top: 2px; flex-shrink: 0; }
+
+        /* ✅ شارة القفل فوق الشارت (للزوار غير المصرحين) */
+        .chart-locked-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(6,9,20,0.55); backdrop-filter: blur(1.5px);
+            border-radius: 14px; z-index: 5; cursor: pointer; gap: 8px;
+            transition: background 0.2s;
+        }
+        .chart-locked-overlay:hover { background: rgba(6,9,20,0.65); }
+        .chart-locked-overlay .lock-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(239,68,68,0.25), rgba(239,68,68,0.05));
+            border: 2px solid rgba(239,68,68,0.5);
+            display: flex; align-items: center; justify-content: center;
+            color: #fca5a5; font-size: 0.9rem;
+        }
+        .chart-locked-overlay .lock-text {
+            font-size: 0.68rem; color: #fca5a5; font-weight: 800;
+            background: rgba(0,0,0,0.5); padding: 3px 12px; border-radius: 20px;
+            border: 1px solid rgba(239,68,68,0.4);
+        }
+        .chart-relative-wrap { position: relative; }
+    </style>
+</head>
+<body>
+
+<!-- ==========================================
+     بوابة الدخول / واجهة الترحيب
+========================================== -->
+<div id="landingScreen">
+    <div class="landing-bg-decor"></div>
+    <div class="landing-content">
+        <div class="landing-logo">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <div class="landing-title">بلدية نعلين</div>
+        <div class="landing-subtitle">نظام التحليل الذكي للمياه والنفايات</div>
+        <div class="landing-tagline">
+            منصة متكاملة أُنجزت أثناء العمل في بلدية نعلين — تجمع بين الخرائط التفاعلية، الصور الميدانية، والتحليل الجغرافي لبيانات الاشتراكات والفجوات.
+        </div>
+
+        <div class="landing-divider"></div>
+
+        <div class="landing-cards">
+            <div class="landing-card">
+                <div class="landing-card-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <div class="landing-card-title"><i class="fas fa-map"></i> خرائط تفاعلية</div>
+                <div class="landing-card-text">
+                    عرض المباني والوحدات على خرائط الأقمار الصناعية، مع طبقات للمياه والنفايات والحرف، وإمكانية تحديد موقع أي وحدة بدقة.
+                </div>
+            </div>
+            <div class="landing-card">
+                <div class="landing-card-icon"><i class="fas fa-images"></i></div>
+                <div class="landing-card-title"><i class="fas fa-camera"></i> معرض الصور الميداني</div>
+                <div class="landing-card-text">
+                    صور المباني المرفقة بكل وحدة، يمكن تصفحها من المعرض أو من نافذة المبنى مباشرة مع إمكانية التكبير.
+                </div>
+            </div>
+            <div class="landing-card">
+                <div class="landing-card-icon"><i class="fas fa-chart-pie"></i></div>
+                <div class="landing-card-title"><i class="fas fa-analytics"></i> تحليل الفجوات</div>
+                <div class="landing-card-text">
+                    إحصاءات ورسوم بيانية لاشتراكات المياه والنفايات، مع حساب الفجوات السنوية لكل قطاع (سكني، تجاري، حرف).
+                </div>
+            </div>
+        </div>
+
+        <div class="data-notice-box">
+            <div class="data-notice-icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <div class="data-notice-title">تنبيه حول مستويات الوصول</div>
+                <div class="data-notice-text">
+                    يحتوي النظام على <strong>بيانات عامة</strong> يمكن للجميع تصفحها (مثل اسم الشارع وموقع المبنى)، و<strong>بيانات خاصة</strong> مخصّصة لموظفي بلدية نعلين والمخوّلين فقط (مثل أرقام الاشتراكات، أسماء المالكين، والفجوات المالية). <br>
+                    للوصول إلى البيانات الخاصة، يُرجى إدخال رمز الدخول الذي يُزوَّد به الموظفون المخوّلون.
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-note">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>ملاحظة مهمة حول الأرقام والإحصاءات:</strong><br>
+                جميع الأرقام والإحصاءات المعروضة تعود <strong>لفترة الإحصاء نفسه</strong> وليست ثابتة؛ فقد تم العمل بعد المشروع على مراجعة البيانات وتدقيقها وفحصها مع الجهات المختصة، لذا قد تختلف الأرقام الفعلية عن المعروضة هنا. هذه المنصة توثّق مرحلة العمل أثناء المشروع.
+            </div>
+        </div>
+
+        <div class="landing-actions">
+            <button class="landing-btn landing-btn-primary" id="enterPublicBtn">
+                <i class="fas fa-globe"></i> دخول للبيانات العامة
+            </button>
+            <button class="landing-btn landing-btn-secondary" id="enterStaffBtn">
+                <i class="fas fa-user-shield"></i> دخول الموظفين المخوّلين
+            </button>
+        </div>
+
+        <div class="landing-footer-note">
+            <strong>جميع الحقوق محفوظة</strong> — إنشاء وتطوير: <strong>Mays Netham Nasser</strong> — بلدية نعلين<br>
+            <span style="opacity:0.7;">هذا النظام توثيقي ومعلوماتي، ولا يُغني عن السجلات الرسمية للبلدية.</span>
+        </div>
+    </div>
+
+    <div class="landing-copyright">
+        <i class="fas fa-copyright copyright-icon"></i>
+        <span>جميع الحقوق محفوظة</span>
+        <span style="opacity:0.4;">|</span>
+        <span>إنشاء وتطوير الموقع:</span>
+        <span class="copyright-name">Mays Netham Nasser</span>
+        <span style="opacity:0.4;">|</span>
+        <span>بلدية نعلين</span>
+    </div>
+</div>
+
+<!-- زر الرجوع للصفحة الرئيسية -->
+<button class="home-back-btn" id="homeBackBtn" style="display:none;">
+    <i class="fas fa-home"></i> الرئيسية
+</button>
+
+<!-- Image Modal -->
+<div id="imgModal">
+    <div class="img-modal-close" onclick="closeImgModal()"><i class="fas fa-times"></i></div>
+    <img id="imgModalImg" src="" alt="صورة المبنى">
+    <div class="img-modal-label" id="imgModalLabel"></div>
+</div>
+
+<!-- Auth Modal -->
+<div id="authModal">
+    <div class="auth-box">
+        <button class="auth-close" id="authCloseBtn"><i class="fas fa-times"></i></button>
+        <h3><i class="fas fa-lock"></i> معلومات خاصة</h3>
+        <p>هذه المعلومات خاصة ومخصصة للمخوّلين فقط. يرجى إدخال رمز الدخول للاطلاع على التفاصيل الكاملة وتصدير البيانات.</p>
+        <input type="password" id="authCodeInput" placeholder="أدخل رمز الدخول..." autocomplete="off">
+        <button id="authSubmitBtn"><i class="fas fa-unlock"></i> دخول</button>
+        <div class="auth-error" id="authErrorMsg"></div>
+    </div>
+</div>
+
+<!-- Authorized badge -->
+<div class="auth-active-badge" id="authActiveBadge">
+    <i class="fas fa-check-circle"></i> وضع مصرّح — المعلومات مكشوفة
+</div>
+
+<!-- Side Modal -->
+<div class="side-modal" id="sideModal">
+    <div class="side-modal-header">
+        <h3><i class="fas fa-table-list"></i> <span id="sideModalTitle">قائمة التفاصيل الكاملة</span></h3>
+        <button id="closeSideModalBtn"><i class="fas fa-times-circle"></i></button>
+    </div>
+    <div class="side-modal-meta" id="sideModalMeta"></div>
+    <div class="side-table-wrapper">
+        <table class="detail-table" id="sideDetailTable">
+            <thead id="sideTableHead"></thead>
+            <tbody id="sideTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Photos Panel -->
+<div id="photosPanel">
+    <div class="photos-header">
+        <h2><i class="fas fa-images"></i> معرض صور المباني</h2>
+        <button class="close-photos" id="closePhotosBtn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="photos-content">
+        <div class="photo-grid" id="photoGalleryGrid">
+            <div style="text-align:center; padding:30px; color:#94a3b8;">جاري تحميل الصور...</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-wrapper" id="dashboardWrapper">
+    <div class="resize-handle" id="resizeHandle"></div>
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-chart-line"></i> التحليل الذكي للفجوات | بلدية نعلين</h1>
+        </div>
+        <div class="content">
+            <div class="global-stats-notice">
+                <i class="fas fa-info-circle"></i>
+                <div>الأرقام والإحصاءات المعروضة تعود لفترة الإحصاء نفسه — وقد خضعت للمراجعة والتدقيق بعد المشروع.</div>
+            </div>
+
+            <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInputDashboard" placeholder="ابحث برقم المبنى، القطعة، الشارع..."></div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-label"><i class="fas fa-building"></i> المباني</div><div class="stat-number" id="totalBuildings">0</div></div>
+                <div class="stat-card"><div class="stat-card-label"><i class="fas fa-door-open"></i> كل الوحدات</div><div class="stat-number" id="totalUnitsAll">0</div></div>
+                <div class="stat-card restricted-stat"><div class="stat-card-label"><i class="fas fa-check-circle"></i> مستخدمة</div><div class="stat-number restricted" id="completedUnitsCount" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div></div>
+                <div class="stat-card restricted-stat"><div class="stat-card-label"><i class="fas fa-home"></i> سكني كلي</div><div class="stat-number restricted" id="resTotalAll" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div></div>
+                <div class="stat-card restricted-stat"><div class="stat-card-label"><i class="fas fa-chart-line"></i> تجاري+صناعي+سياحي</div><div class="stat-number restricted" id="totalCommIndTourAll" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div></div>
+                <div class="stat-card total-loss-stat locked-stat" id="totalLossCard">
+                    <div class="stat-card-label"><i class="fas fa-coins"></i> إجمالي الخسائر</div>
+                    <div class="stat-number" id="totalOverallLoss">
+                        <span class="loss-locked-overlay" onclick="event.stopPropagation(); openAuthModal(() => refreshAllPopups())">
+                            <i class="fas fa-lock"></i> خاص
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ شارت التوزيع - مع قفل للأرقام فوق الأعمدة -->
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-chart-bar"></i> التوزيع التفصيلي للوحدات حسب النوع</div>
+                <div class="chart-relative-wrap">
+                    <canvas id="categoriesChart" class="chart-main"></canvas>
+                    <div class="chart-locked-overlay" id="categoriesChartLock" onclick="openAuthModal(()=>refreshAllPopups())" style="display:none;">
+                        <div class="lock-icon"><i class="fas fa-lock"></i></div>
+                        <div class="lock-text">الأرقام مخفية — دخول المخوّلين</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-chart-simple"></i> الوحدات المستخدمة مقابل غير المستخدمة (أعمدة)</div>
+                <canvas id="usageChart" style="height:170px; width:100%"></canvas>
+            </div>
+
+            <!-- Water -->
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-tint"></i> تحليل اشتراكات المياه - الوحدات المستخدمة فقط</div>
+                <div class="waste-stats-grid">
+                    <div class="waste-stat"><div class="waste-stat-value restricted" id="waterTotalAll" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">إجمالي المستخدمة</div></div>
+                    <div class="waste-stat with"><div class="waste-stat-value restricted" id="waterWithAll" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">✅ مع مياه</div><div class="waste-stat-percent" id="waterWithAllPct"></div></div>
+                    <div class="waste-stat without" id="waterWithoutStat" style="cursor:pointer"><div class="waste-stat-value restricted" id="waterWithoutAll" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">⚠️ بدون مياه</div><div class="waste-stat-percent" id="waterWithoutAllPct"></div></div>
+                </div>
+                <div style="max-width:200px;margin:auto"><canvas id="waterAllPieChart"></canvas></div>
+                <div class="highlight-box locked-box" id="waterGapBox" onclick="openAuthModal(() => refreshAllPopups())">
+                    💧 رسوم 1,200 شيكل | الفجوة: <strong id="waterTotalGap" class="gap-locked"><i class="fas fa-lock"></i> خاص</strong>
+                </div>
+            </div>
+
+            <!-- Residential Waste -->
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-trash-alt"></i> تحليل اشتراكات النفايات - الوحدات السكنية المستخدمة</div>
+                <div class="waste-stats-grid">
+                    <div class="waste-stat"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">سكني مستخدم</div></div>
+                    <div class="waste-stat with"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">✅ مع نفايات</div><div class="waste-stat-percent" id="wasteWithPercent"></div></div>
+                    <div class="waste-stat without" id="wasteWithoutStat" style="cursor:pointer"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">⚠️ بدون نفايات</div><div class="waste-stat-percent" id="wasteWithoutPercent"></div></div>
+                </div>
+                <div style="max-width:200px;margin:auto"><canvas id="wastePieChart"></canvas></div>
+                <div class="highlight-box locked-box" id="wasteGapBox" onclick="openAuthModal(() => refreshAllPopups())">
+                    🗑️ رسوم 300 شيكل | الفجوة السنوية: <strong id="gapAmountDisplay" class="gap-locked"><i class="fas fa-lock"></i> خاص</strong>
+                </div>
+            </div>
+
+            <!-- Commercial Waste -->
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-trash-alt"></i> تحليل اشتراكات النفايات - التجاري/الصناعي/السياحي</div>
+                <div class="waste-stats-grid">
+                    <div class="waste-stat"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">تجاري+صناعي+سياحي</div></div>
+                    <div class="waste-stat with"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">✅ مع نفايات</div><div class="waste-stat-percent" id="comWasteWithPct"></div></div>
+                    <div class="waste-stat without" id="comWasteWithoutStat" style="cursor:pointer"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">⚠️ بدون نفايات</div><div class="waste-stat-percent" id="comWasteWithoutPct"></div></div>
+                </div>
+                <div style="max-width:200px;margin:auto"><canvas id="comWastePieChart"></canvas></div>
+                <div class="highlight-box locked-box" id="comGapBox" onclick="openAuthModal(() => refreshAllPopups())">
+                    🏢 رسوم 600 شيكل | الفجوة السنوية: <strong id="comGapAmountDisplay" class="gap-locked"><i class="fas fa-lock"></i> خاص</strong>
+                </div>
+            </div>
+
+            <!-- Crafts -->
+            <div class="chart-container">
+                <div class="section-title"><i class="fas fa-industry"></i> تحليل قطاع الحرف والصناعات (120 شيكل سنويًا)</div>
+                <div class="waste-stats-grid">
+                    <div class="waste-stat"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">إجمالي تجاري/صناعي/سياحي</div></div>
+                    <div class="waste-stat without" id="craftsWithoutStat" style="cursor:pointer"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">⚠️ بدون اشتراك حرف</div><div class="waste-stat-percent" id="craftsPct"></div></div>
+                    <div class="waste-stat with"><div class="waste-stat-value restricted" onclick="openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> خاص</div><div class="waste-stat-label">✅ مع اشتراك حرف</div><div class="waste-stat-percent" id="craftsWithPct"></div></div>
+                </div>
+                <div style="max-width:200px;margin:auto"><canvas id="craftsPieChart"></canvas></div>
+                <div class="highlight-box locked-box" id="craftsGapBox" onclick="openAuthModal(() => refreshAllPopups())">
+                    💰 الفجوة السنوية: <strong id="craftsGapValue" class="gap-locked"><i class="fas fa-lock"></i> خاص</strong> (120 شيكل/وحدة)
+                </div>
+                <div class="highlight-box" style="cursor:pointer;margin-top:6px;" id="craftsDetailsBtn">🔧 اضغط لعرض جميع تفاصيل الحرف والصناعات بدون اشتراك</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="toggle-dashboard-btn" id="toggleDashboardBtn" title="إخفاء/إظهار لوحة التحكم">
+    <i class="fas fa-chevron-right"></i>
+</button>
+
+<div class="map-wrapper">
+    <div id="map"></div>
+    <div class="glass-ctrl">
+        <button class="glass-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+        <button class="glass-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+        <button class="glass-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+        <button class="glass-btn" id="openGalleryBtn" title="معرض الصور"><i class="fas fa-images"></i></button>
+    </div>
+    <div class="layer-switcher">
+        <button class="layer-option" data-layer="streets"><i class="fas fa-road"></i>شوارع</button>
+        <button class="layer-option active" data-layer="satellite"><i class="fas fa-satellite"></i>قمر صناعي</button>
+        <button class="layer-option" data-layer="dark"><i class="fas fa-moon"></i>ليلي</button>
+    </div>
+</div>
+
+<div style="position: absolute; top: 20px; left: 20px; z-index: 550; width: 280px; pointer-events: none;">
+    <div style="pointer-events: auto;">
+        <div class="waste-control-panel">
+            <div class="wcp-box">
+                <div class="wcp-header"><div class="wcp-header-icon"><i class="fas fa-layers"></i></div><div><div class="wcp-title">تحكم الطبقات</div></div></div>
+                <div class="wcp-section-label"><i class="fas fa-tint"></i> طبقات المياه</div>
+                <div class="wcp-toggles">
+                    <button class="wcp-btn active" id="toggleWaterWith"><div class="layer-dot" style="background:#3b82f6;">💧</div><span>مع اشتراك مياه</span></button>
+                    <button class="wcp-btn active" id="toggleWaterWithout"><div class="layer-dot" style="background:#ef4444;">🚫</div><span>بدون اشتراك مياه</span></button>
+                </div>
+                <div class="wcp-section-sep"></div>
+                <div class="wcp-section-label"><i class="fas fa-trash"></i> طبقات النفايات</div>
+                <div class="wcp-toggles">
+                    <button class="wcp-btn active" id="toggleResWasteWithout"><div class="layer-dot" style="background:#ef4444;">🏠</div><span>سكني بدون نفايات</span></button>
+                    <button class="wcp-btn active" id="toggleComWasteWithout"><div class="layer-dot" style="background:#f97316;">🏢</div><span>تجاري/صناعي بدون نفايات</span></button>
+                </div>
+                <div class="wcp-section-sep"></div>
+                <div class="wcp-section-label"><i class="fas fa-industry"></i> قطاع خاص</div>
+                <div class="wcp-toggles"><button class="wcp-btn active" id="toggleCraftsLayer"><div class="layer-dot" style="background:#eab308;">⚙️</div><span>حرف وصناعات (بلا اشتراك)</span></button></div>
+                <div class="wcp-section-sep"></div>
+                <div class="wcp-section-label"><i class="fas fa-file-excel"></i> تصدير بيانات متقدمة <span style="color:#fca5a5;font-size:0.55rem;margin-right:4px;"><i class="fas fa-lock"></i></span></div>
+                <div class="flex-export-buttons" id="exportButtonsGroup">
+                    <button class="small-export-btn locked-export" id="exportWaterWithoutExcel"><i class="fas fa-tint"></i> بدون مياه</button>
+                    <button class="small-export-btn locked-export" id="exportResWasteExcel"><i class="fas fa-home"></i> سكني بلا نفايات</button>
+                    <button class="small-export-btn locked-export" id="exportComWasteExcel"><i class="fas fa-building"></i> تجاري بلا نفايات</button>
+                    <button class="small-export-btn locked-export" id="exportCraftsExcel"><i class="fas fa-industry"></i> حرف بلا اشتراك</button>
+                    <button class="small-export-btn locked-export" id="exportExcelBtn"><i class="fas fa-download"></i> كل البيانات</button>
+                </div>
+                <div class="wcp-section-sep"></div>
+                <div class="legend-left">
+                    <div class="legend-title"><i class="fas fa-map-legend"></i> دليل الألوان</div>
+                    <div class="legend-item"><div class="legend-icon" style="background:rgba(59,130,246,0.2);border:2px solid #3b82f6;border-radius:50%;">💧</div> مع اشتراك مياه</div>
+                    <div class="legend-item"><div class="legend-icon" style="background:rgba(239,68,68,0.2);border:2px solid #ef4444;border-radius:50%;">🚫</div> بدون اشتراك مياه</div>
+                    <div class="legend-item"><div class="legend-icon" style="background:rgba(239,68,68,0.2);border:2px solid #ef4444;border-radius:6px;">🏠</div> سكني بدون نفايات</div>
+                    <div class="legend-item"><div class="legend-icon" style="background:rgba(249,115,22,0.2);border:2px solid #f97316;border-radius:6px;">🏢</div> تجاري/صناعي بدون نفايات</div>
+                    <div class="legend-item"><div class="legend-icon" style="background:rgba(234,179,8,0.2);border:2px solid #eab308;border-radius:6px;">⚙️</div> حرف وصناعات (بلا اشتراك)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="site-footer">
+    <i class="fas fa-copyright copyright-icon"></i>
+    <span>جميع الحقوق محفوظة</span>
+    <span class="copyright-sep">|</span>
+    <span>إنشاء وتطوير الموقع:</span>
+    <span class="copyright-name">Mays Netham Nasser</span>
+    <span class="copyright-sep">|</span>
+    <span>بلدية نعلين</span>
+</div>
+
+<script>
+    // ==========================================
+    // 0. نظام المصادقة - V18
+    // ==========================================
+    const AUTH_TOKEN = "NALEEN2024";
+    let isAuthorized = false;
+
+    const PUBLIC_FIELDS = ['street_name'];
+    const HIDDEN_FIELDS = [
+        'geometry','created_at','updated_at','survey_fil','unit_licen','taxpayer_t',
+        'is_head_of','is_head__1','is_head__2','is_head__3','is_head__4','num_rooms',
+        'estimation','notes','surveyor_f','building_c','lon','lat','x','y','easting','northing'
+    ];
+
+    function isSensitiveField(fieldName) {
+        const f = (fieldName || '').toLowerCase();
+        if (HIDDEN_FIELDS.includes(f)) return false;
+        return !isPublicField(fieldName);
+    }
+    function isPublicField(fieldName) {
+        const f = (fieldName || '').toLowerCase();
+        return PUBLIC_FIELDS.some(pf => f === pf.toLowerCase());
+    }
+    function isHiddenField(fieldName) {
+        return HIDDEN_FIELDS.includes((fieldName || '').toLowerCase());
+    }
+
+    const FIELD_LABELS = {
+        'id': { ar: 'المعرف', icon: 'fa-hashtag' },
+        'building_id': { ar: 'رقم المبنى', icon: 'fa-building' },
+        'unit_usage': { ar: 'نوع الوحدة', icon: 'fa-home' },
+        'status': { ar: 'الحالة', icon: 'fa-info-circle' },
+        'final_wate': { ar: 'اشتراك مياه', icon: 'fa-tint' },
+        'waste_status': { ar: 'اشتراك نفايات', icon: 'fa-trash' },
+        'street_name': { ar: 'اسم الشارع', icon: 'fa-road' },
+        'plot_number': { ar: 'رقم القطعة', icon: 'fa-map' },
+        'area_name': { ar: 'المنطقة', icon: 'fa-map-marker-alt' }
+    };
+    function getFieldLabel(k) { return FIELD_LABELS[k] ? FIELD_LABELS[k].ar : k; }
+    function getFieldIcon(k) { return (FIELD_LABELS[k] && FIELD_LABELS[k].icon) ? FIELD_LABELS[k].icon : 'fa-circle-dot'; }
+
+    // ==========================================
+    // بوابة الدخول
+    // ==========================================
+    const landingScreen = document.getElementById('landingScreen');
+    const homeBackBtn = document.getElementById('homeBackBtn');
+    let siteInitialized = false;
+
+    function showLanding() {
+        landingScreen.classList.remove('hide');
+        homeBackBtn.style.display = 'none';
+    }
+
+    function hideLanding(showBackBtn = true) {
+        landingScreen.classList.add('hide');
+        if (showBackBtn) homeBackBtn.style.display = 'flex';
+        if (!siteInitialized) {
+            siteInitialized = true;
+            bootstrap();
+        } else {
+            setTimeout(() => { if (map) map.invalidateSize(); }, 400);
+        }
+    }
+
+    document.getElementById('enterPublicBtn').onclick = () => {
+        isAuthorized = false;
+        hideLanding(true);
+        // نضمن إظهار أقفال الشارت عند الدخول العام
+        setTimeout(() => updateChartLocks(), 500);
+    };
+    document.getElementById('enterStaffBtn').onclick = () => {
+        hideLanding(true);
+        setTimeout(() => {
+            openAuthModal(() => {
+                refreshAllPopups();
+            });
+        }, 300);
+    };
+    homeBackBtn.onclick = () => { showLanding(); };
+
+    // ==========================================
+    // نظام المصادقة
+    // ==========================================
+    function openAuthModal(callback) {
+        const modal = document.getElementById('authModal');
+        const input = document.getElementById('authCodeInput');
+        const errorMsg = document.getElementById('authErrorMsg');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const closeBtn = document.getElementById('authCloseBtn');
+
+        input.value = '';
+        errorMsg.textContent = '';
+        modal.classList.add('open');
+        setTimeout(() => input.focus(), 200);
+
+        const closeAuth = () => {
+            modal.classList.remove('open');
+            submitBtn.onclick = null;
+            input.onkeydown = null;
+            closeBtn.onclick = null;
+        };
+
+        const tryAuth = () => {
+            if (input.value.trim() === AUTH_TOKEN) {
+                isAuthorized = true;
+                modal.classList.remove('open');
+                document.getElementById('authActiveBadge').classList.add('show');
+                unlockExports();
+                if (callback) callback();
+            } else {
+                errorMsg.textContent = 'رمز الدخول غير صحيح. يرجى المحاولة مرة أخرى.';
+                input.value = '';
+                input.focus();
+            }
+        };
+
+        submitBtn.onclick = tryAuth;
+        input.onkeydown = (e) => { if (e.key === 'Enter') tryAuth(); };
+        closeBtn.onclick = closeAuth;
+    }
+
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+
+    function unlockExports() {
+        document.querySelectorAll('#exportButtonsGroup .small-export-btn').forEach(btn => {
+            btn.classList.remove('locked-export');
+        });
+    }
+
+    function requireAuthThen(action) {
+        if (isAuthorized) action();
+        else openAuthModal(() => action());
+    }
+
+    // ==========================================
+    // 1. إدارة الصور
+    // ==========================================
+    let photosMap = new Map();
+
+    async function loadPhotosData() {
+        try {
+            const photosUrl = 'https://maysnasser.github.io/photos.xlsx';
+            const response = await fetch(photosUrl);
+            if (!response.ok) throw new Error('فشل تحميل ملف الصور');
+            const arrayBuffer = await response.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(sheet);
+
+            photosMap.clear();
+            data.forEach(row => {
+                let buildingId = row.id || row.ID || row.Id || row['المعرف'] || row['رقم المبنى'];
+                let imageUrl = row.building_front_image_url || row.building_image_url || row.image_url || row.photo_url || row.url || row['رابط الصورة'];
+                if (buildingId && imageUrl) {
+                    buildingId = buildingId.toString().trim();
+                    imageUrl = imageUrl.toString().trim();
+                    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
+                        imageUrl = 'http://192.168.10.19:8081/uploads/' + imageUrl;
+                    }
+                    photosMap.set(buildingId, imageUrl);
+                }
+            });
+            console.log(`✅ تم تحميل ${photosMap.size} صورة`);
+            renderPhotoGallery();
+        } catch (error) {
+            console.error('خطأ في تحميل الصور:', error);
+            document.getElementById('photoGalleryGrid').innerHTML = '<div style="text-align:center; padding:30px; color:#ef4444;">فشل تحميل الصور</div>';
+        }
+    }
+
+    function getBuildingPhoto(buildingId) {
+        if (!buildingId || !photosMap) return null;
+        const idStr = buildingId.toString().trim();
+        if (photosMap.has(idStr)) return photosMap.get(idStr);
+        const altId = idStr.replace(/^0+/, '');
+        if (photosMap.has(altId)) return photosMap.get(altId);
+        const padded = idStr.padStart(4, '0');
+        if (photosMap.has(padded)) return photosMap.get(padded);
+        return null;
+    }
+
+    function renderPhotoGallery() {
+        const container = document.getElementById('photoGalleryGrid');
+        if (!container) return;
+        if (photosMap.size === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;">لا توجد صور متاحة</div>';
+            return;
+        }
+        let html = '';
+        for (let [buildingId, imgUrl] of photosMap.entries()) {
+            html += `
+                <div class="photo-card" onclick="zoomToBuildingAndOpenImage('${buildingId}', '${imgUrl}')">
+                    <img src="${imgUrl}" class="photo-thumb" onerror="this.src='https://via.placeholder.com/400x200?text=صورة+غير+متوفرة'">
+                    <div class="photo-info">
+                        <div class="photo-building-id">المبنى ${buildingId}</div>
+                        <div class="photo-stats"><i class="fas fa-map-marker-alt"></i> اضغط للتكبير</div>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    function openImageModal(imgUrl, buildingId) {
+        document.getElementById('imgModalImg').src = imgUrl;
+        document.getElementById('imgModalLabel').innerText = `صورة المبنى رقم ${buildingId}`;
+        document.getElementById('imgModal').classList.add('open');
+    }
+    function closeImgModal() { document.getElementById('imgModal').classList.remove('open'); }
+    window.closeImgModal = closeImgModal;
+    window.openImageModal = openImageModal;
+
+    async function zoomToBuildingAndOpenImage(buildingId, imgUrl) {
+        if (buildingsGeoJSON && buildingsGeoJSON.features) {
+            const feature = buildingsGeoJSON.features.find(f => f.properties?.id?.toString() === buildingId.toString());
+            if (feature && feature.geometry) {
+                const bounds = L.geoJSON(feature).getBounds();
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
+                setTimeout(() => openImageModal(imgUrl, buildingId), 800);
+                return;
+            }
+        }
+        openImageModal(imgUrl, buildingId);
+    }
+    window.zoomToBuildingAndOpenImage = zoomToBuildingAndOpenImage;
+
+    // ==========================================
+    // 2. باقي النظام
+    // ==========================================
+    const dashboardWrapper = document.getElementById('dashboardWrapper');
+    const toggleDashboardBtn = document.getElementById('toggleDashboardBtn');
+    let isDashboardVisible = true;
+
+    toggleDashboardBtn.addEventListener('click', () => {
+        isDashboardVisible = !isDashboardVisible;
+        if (isDashboardVisible) {
+            dashboardWrapper.classList.remove('collapsed');
+            toggleDashboardBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            toggleDashboardBtn.title = 'إخفاء لوحة التحكم';
+        } else {
+            dashboardWrapper.classList.add('collapsed');
+            toggleDashboardBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            toggleDashboardBtn.title = 'إظهار لوحة التحكم';
+        }
+        setTimeout(() => { if (map) map.invalidateSize(); }, 350);
+    });
+
+    const wrapper = document.getElementById('dashboardWrapper');
+    const resizeHandle = document.getElementById('resizeHandle');
+    let startX, startWidth;
+    resizeHandle.addEventListener('mousedown', (e) => {
+        startX = e.clientX;
+        startWidth = parseInt(window.getComputedStyle(wrapper).width, 10);
+        document.documentElement.addEventListener('mousemove', onMouseMove);
+        document.documentElement.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    });
+    function onMouseMove(e) {
+        if (isDashboardVisible) {
+            let newWidth = startWidth + (startX - e.clientX);
+            if (newWidth < 360) newWidth = 360;
+            if (newWidth > 1000) newWidth = 1000;
+            wrapper.style.width = newWidth + 'px';
+        }
+    }
+    function onMouseUp() {
+        document.documentElement.removeEventListener('mousemove', onMouseMove);
+        document.documentElement.removeEventListener('mouseup', onMouseUp);
+    }
+
+    function createMarkerIcon(opts) {
+        const sz = opts.size || 22;
+        const shapes = { circle:`border-radius:50%`, square:`border-radius:5px`, diamond:`border-radius:5px;transform:rotate(45deg)` };
+        const shapeStyle = shapes[opts.shape] || shapes.circle;
+        const innerStyle = opts.shape === 'diamond' ? 'transform:rotate(-45deg);display:block;' : 'display:block;';
+        const html = `<div style="width:${sz}px;height:${sz}px;background:${opts.color};${shapeStyle};border:2px solid ${opts.borderColor || '#fff'};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.55);font-size:${Math.round(sz*0.48)}px;cursor:pointer;"><span style="${innerStyle}">${opts.emoji}</span></div>`;
+        return L.divIcon({ html, iconSize: [sz, sz], iconAnchor: [sz/2, sz/2], className: '', popupAnchor: [0, -sz/2] });
+    }
+    const ICON_DEFS = {
+        waterWith: { emoji:'💧', color:'rgba(59,130,246,0.88)', borderColor:'#93c5fd', shape:'circle', size:22 },
+        waterWithout: { emoji:'🚫', color:'rgba(239,68,68,0.88)', borderColor:'#fca5a5', shape:'circle', size:22 },
+        resWaste: { emoji:'🏠', color:'rgba(239,68,68,0.88)', borderColor:'#fca5a5', shape:'square', size:20 },
+        comWaste: { emoji:'🏢', color:'rgba(249,115,22,0.88)', borderColor:'#fdba74', shape:'square', size:20 },
+        crafts: { emoji:'⚙️', color:'rgba(234,179,8,0.88)', borderColor:'#fde68a', shape:'diamond', size:22 }
+    };
+    const ICONS = {
+        waterWith:()=>createMarkerIcon(ICON_DEFS.waterWith),
+        waterWithout:()=>createMarkerIcon(ICON_DEFS.waterWithout),
+        resWaste:()=>createMarkerIcon(ICON_DEFS.resWaste),
+        comWaste:()=>createMarkerIcon(ICON_DEFS.comWaste),
+        crafts:()=>createMarkerIcon(ICON_DEFS.crafts)
+    };
+
+    let map, activeBase = 'satellite', tileProviders = {};
+    let buildingsGeoJSON = null, allUnitsRaw = [], usedUnits = [];
+    let categoriesChart;
+    let waterWithLayer=null, waterWithoutLayer=null, resWasteWithoutLayer=null, commercialWasteWithoutLayer=null, craftsLayer=null;
+    let waterWithCount=0, waterWithoutCount=0, waterWithoutFeaturesRaw=[];
+    let wasteWithoutFeaturesRaw=[], commercialWasteWithoutFeaturesRaw=[];
+    let craftsFeaturesRaw=[];
+    let totalComIndTour = 0;
+    const WATER_FEE=1200, WASTE_RES=300, WASTE_COM=600, CRAFTS_FEE=120;
+
+    function initMap() {
+        map = L.map('map').setView([31.947, 35.043], 15.2);
+        tileProviders.streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        tileProviders.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        tileProviders.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+        tileProviders.satellite.addTo(map);
+    }
+
+    function createBeautifulPopup(props, buildingId) {
+        const imageUrl = getBuildingPhoto(buildingId);
+        let imageHtml = '';
+        if (imageUrl) {
+            imageHtml = `
+                <div class="popup-image-area" onclick="event.stopPropagation(); openImageModal('${imageUrl}', '${buildingId}')">
+                    <img src="${imageUrl}" class="popup-image" onerror="this.src='https://via.placeholder.com/400x200?text=صورة+غير+متوفرة'">
+                    <div class="popup-image-overlay"><i class="fas fa-search-plus"></i> اضغط لتكبير الصورة</div>
+                </div>
+            `;
+        } else {
+            imageHtml = `<div class="popup-no-image"><i class="fas fa-camera"></i><span>لا توجد صورة متاحة للمبنى</span></div>`;
+        }
+
+        let badgesHtml = '';
+        if (props.final_wate && props.final_wate.trim() !== '') {
+            badgesHtml += '<span class="popup-badge badge-water"><i class="fas fa-tint"></i> مع اشتراك مياه</span>';
+        } else {
+            badgesHtml += '<span class="popup-badge badge-danger"><i class="fas fa-exclamation-triangle"></i> بدون اشتراك مياه — فجوة 1,200 ₪</span>';
+        }
+        if (isAuthorized) {
+            badgesHtml += '<span class="popup-badge badge-auth"><i class="fas fa-unlock"></i> مصرّح</span>';
+        } else {
+            badgesHtml += '<span class="popup-badge badge-lock"><i class="fas fa-lock"></i> بيانات مقيدة</span>';
+        }
+
+        let detailsHtml = '';
+        if (!isAuthorized) {
+            detailsHtml = `
+                <div class="popup-locked-area">
+                    <div class="popup-locked-icon"><i class="fas fa-lock"></i></div>
+                    <div class="popup-locked-title">معلومات هذا المبنى خاصة</div>
+                    <div class="popup-locked-sub">التفاصيل الكاملة متاحة للمخوّلين فقط.<br>يرجى إدخال رمز الدخول للاطلاع.</div>
+                    <button class="popup-unlock-btn" onclick="event.stopPropagation(); openAuthModal(() => refreshAllPopups())">
+                        <i class="fas fa-key"></i> دخول المخوّلين
+                    </button>
+                </div>
+            `;
+        } else {
+            const rows = buildPopupInfoRows(props);
+            detailsHtml = `<div class="popup-details"><div class="popup-info-grid">${rows}</div></div>`;
+        }
+
+        return `
+            <div class="popup-container">
+                <div class="popup-header">
+                    <div class="popup-title-row">
+                        <h4 class="popup-title"><i class="fas fa-building"></i> المبنى رقم ${buildingId || props.id || props.building_id || '—'}</h4>
+                    </div>
+                    <div class="popup-status-badges">${badgesHtml}</div>
+                </div>
+                ${imageHtml}
+                ${detailsHtml}
+                <div class="popup-actions">
+                    ${imageUrl ? `<button class="popup-btn" onclick="event.stopPropagation(); openImageModal('${imageUrl}', '${buildingId}')"><i class="fas fa-image"></i> الصورة</button>` : ''}
+                    <button class="popup-btn" onclick="event.stopPropagation(); zoomToBuilding('${buildingId || props.id}')"><i class="fas fa-map-marker-alt"></i> تكبير</button>
+                    ${!isAuthorized ? `<button class="popup-btn danger" onclick="event.stopPropagation(); openAuthModal(() => refreshAllPopups())"><i class="fas fa-unlock-alt"></i> دخول</button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function buildPopupInfoRows(props) {
+        const priorityFields = ['id','building_id','unit_usage','status','final_wate','waste_status','street_name','plot_number','area_name'];
+        const processed = new Set();
+        let html = '';
+        priorityFields.forEach(field => {
+            if (props[field] !== undefined && props[field] !== null && props[field] !== '') {
+                html += renderInfoItem(field, props[field]);
+                processed.add(field);
+            }
+        });
+        Object.entries(props).forEach(([k, v]) => {
+            if (processed.has(k)) return;
+            if (isHiddenField(k)) return;
+            if (v === null || v === undefined || v === '') return;
+            html += renderInfoItem(k, v);
+        });
+        return html || '<div style="text-align:center;color:#94a3b8;padding:10px;font-size:0.72rem;">لا توجد بيانات إضافية</div>';
+    }
+
+    function renderInfoItem(k, v) {
+        return `
+            <div class="popup-info-item">
+                <div class="popup-info-label"><i class="fas ${getFieldIcon(k)}"></i> ${getFieldLabel(k)}</div>
+                <div class="popup-info-value">${v}</div>
+            </div>
+        `;
+    }
+
+    // ✅ تحديث حالة أقفال الشارت
+    function updateChartLocks() {
+        const lock = document.getElementById('categoriesChartLock');
+        if (!lock) return;
+        if (isAuthorized) {
+            lock.style.display = 'none';
+        } else {
+            lock.style.display = 'flex';
+        }
+    }
+
+    function refreshAllPopups() {
+        map.eachLayer(layer => {
+            if (layer instanceof L.GeoJSON) {
+                layer.eachLayer(subLayer => {
+                    if (subLayer.getPopup && subLayer.feature) {
+                        const props = subLayer.feature.properties || {};
+                        const bId = props.id || props.building_id;
+                        subLayer.bindPopup(createBeautifulPopup(props, bId), {
+                            className: 'enhanced-popup', maxWidth: 460, minWidth: 340
+                        });
+                    }
+                });
+            }
+        });
+
+        const card = document.getElementById('totalLossCard');
+        if (isAuthorized) {
+            card.classList.remove('locked-stat');
+            card.classList.add('total-loss-stat');
+            recalcTotalLoss();
+
+            const waterGapEl = document.getElementById('waterTotalGap');
+            if (waterGapEl) { waterGapEl.className = 'gap-unlocked'; waterGapEl.innerText = (waterWithoutCount * WATER_FEE).toLocaleString() + ' ₪'; }
+            const wasteGapEl = document.getElementById('gapAmountDisplay');
+            if (wasteGapEl) { wasteGapEl.className = 'gap-unlocked'; wasteGapEl.innerText = (wasteWithoutFeaturesRaw.length * WASTE_RES).toLocaleString() + ' ₪'; }
+            const comGapEl = document.getElementById('comGapAmountDisplay');
+            if (comGapEl) { comGapEl.className = 'gap-unlocked'; comGapEl.innerText = (commercialWasteWithoutFeaturesRaw.length * WASTE_COM).toLocaleString() + ' ₪'; }
+            const craftsGapEl = document.getElementById('craftsGapValue');
+            if (craftsGapEl) { craftsGapEl.className = 'gap-unlocked'; craftsGapEl.innerText = (craftsFeaturesRaw.length * CRAFTS_FEE).toLocaleString() + ' ₪'; }
+
+            ['waterGapBox','wasteGapBox','comGapBox','craftsGapBox'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.remove('locked-box'); el.onclick = null; }
+            });
+
+            unlockDashboardNumbers();
+            updateChartLocks();
+            // إعادة رسم الشارت لإظهار الأرقام
+            if (lastTypeMap) renderCategoriesChart(lastTypeMap);
+        }
+    }
+    window.refreshAllPopups = refreshAllPopups;
+
+    function unlockDashboardNumbers() {
+        if (!isAuthorized) return;
+        document.getElementById('completedUnitsCount').innerHTML = usedUnits.length;
+        document.getElementById('completedUnitsCount').classList.remove('restricted');
+        document.getElementById('resTotalAll').innerHTML = '1838';
+        document.getElementById('resTotalAll').classList.remove('restricted');
+        document.getElementById('totalCommIndTourAll').innerHTML = totalComIndTour;
+        document.getElementById('totalCommIndTourAll').classList.remove('restricted');
+
+        document.getElementById('waterTotalAll').innerHTML = usedUnits.length;
+        document.getElementById('waterTotalAll').classList.remove('restricted');
+        document.getElementById('waterWithAll').innerHTML = waterWithCount;
+        document.getElementById('waterWithAll').classList.remove('restricted');
+        document.getElementById('waterWithoutAll').innerHTML = waterWithoutCount;
+        document.getElementById('waterWithoutAll').classList.remove('restricted');
+        const pctW = usedUnits.length ? ((waterWithCount/usedUnits.length)*100).toFixed(1) : 0;
+        const pctWo = usedUnits.length ? ((waterWithoutCount/usedUnits.length)*100).toFixed(1) : 0;
+        document.getElementById('waterWithAllPct').innerText = pctW+'%';
+        document.getElementById('waterWithoutAllPct').innerText = pctWo+'%';
+
+        const totalResUsed = 1838;
+        const wasteWithoutCount = wasteWithoutFeaturesRaw.length;
+        const wasteWithCountVal = totalResUsed - wasteWithoutCount;
+        document.getElementById('wasteWithPercent').innerText = totalResUsed ? ((wasteWithCountVal/totalResUsed)*100).toFixed(1)+'%' : '0%';
+        document.getElementById('wasteWithoutPercent').innerText = totalResUsed ? ((wasteWithoutCount/totalResUsed)*100).toFixed(1)+'%' : '0%';
+
+        const comWasteWithout = commercialWasteWithoutFeaturesRaw.length;
+        const comWithCount = totalComIndTour - comWasteWithout;
+        document.getElementById('comWasteWithPct').innerText = totalComIndTour ? ((comWithCount/totalComIndTour)*100).toFixed(1)+'%' : '0%';
+        document.getElementById('comWasteWithoutPct').innerText = totalComIndTour ? ((comWasteWithout/totalComIndTour)*100).toFixed(1)+'%' : '0%';
+
+        const craftsWithoutCount = craftsFeaturesRaw.length;
+        const craftsWithCountVal = totalComIndTour - craftsWithoutCount;
+        document.getElementById('craftsPct').innerText = totalComIndTour ? ((craftsWithoutCount/totalComIndTour)*100).toFixed(1)+'%' : '0%';
+        document.getElementById('craftsWithPct').innerText = totalComIndTour ? ((craftsWithCountVal/totalComIndTour)*100).toFixed(1)+'%' : '0%';
+    }
+
+    function zoomToBuilding(buildingId) {
+        if (buildingsGeoJSON && buildingsGeoJSON.features) {
+            const feature = buildingsGeoJSON.features.find(f => f.properties?.id?.toString() === buildingId?.toString());
+            if (feature && feature.geometry) {
+                const bounds = L.geoJSON(feature).getBounds();
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 20 });
+            }
+        }
+    }
+    window.zoomToBuilding = zoomToBuilding;
+
+    function buildFullPopup(props, title, badgeHtml, imageHtml = '') {
+        let rows = '';
+        if (!isAuthorized) {
+            rows = `
+                <div class="popup-locked-area" style="border: none; padding: 18px 14px;">
+                    <div class="popup-locked-icon"><i class="fas fa-lock"></i></div>
+                    <div class="popup-locked-title">بيانات مقيدة</div>
+                    <div class="popup-locked-sub">هذه التفاصيل متاحة للمخوّلين فقط.</div>
+                    <button class="popup-unlock-btn" onclick="event.stopPropagation(); openAuthModal(() => refreshAllPopups())">
+                        <i class="fas fa-key"></i> دخول المخوّلين
+                    </button>
+                </div>
+            `;
+        } else {
+            const priorityFields = ['id','building_id','unit_usage','status','final_wate','waste_status','street_name','plot_number','area_name'];
+            const processed = new Set();
+            let itemsHtml = '';
+            priorityFields.forEach(field => {
+                if (props[field] !== undefined && props[field] !== null && props[field] !== '') {
+                    itemsHtml += renderInfoItem(field, props[field]);
+                    processed.add(field);
+                }
+            });
+            Object.entries(props).forEach(([k, v]) => {
+                if (processed.has(k)) return;
+                if (isHiddenField(k)) return;
+                if (v === null || v === undefined || v === '') return;
+                itemsHtml += renderInfoItem(k, v);
+            });
+            rows = `<div class="popup-details"><div class="popup-info-grid">${itemsHtml || '<div style="text-align:center;color:#94a3b8;padding:10px;">لا توجد بيانات</div>'}</div></div>`;
+        }
+
+        return `<div class="popup-container">
+            <div class="popup-header">
+                <div class="popup-title-row"><h4 class="popup-title">${title}</h4></div>
+                ${badgeHtml ? `<div class="popup-status-badges">${badgeHtml}</div>` : ''}
+            </div>
+            ${imageHtml}
+            ${rows}
+        </div>`;
+    }
+
+    function getUnitType(prop) {
+        let u = prop.unit_usage || prop.unit_type_id || '';
+        if (u=='1'||u=='سكني') return 'سكني';
+        if (u=='2'||u=='تجاري') return 'تجاري';
+        if (u=='3'||u=='صناعي') return 'صناعي';
+        if (u=='4'||u=='سياحي') return 'سياحي';
+        if (u=='5') return 'تعليمي';
+        if (u=='6') return 'ديني';
+        if (u=='7') return 'مدني';
+        if (u=='8') return 'صحي';
+        return 'غير مستخدم';
+    }
+    function filterUsed(f) { return f.filter(fe => fe.properties?.status?.toString().toLowerCase() === 'complete'); }
+    async function fetchJSON(url) { let r = await fetch(url); if (!r.ok) throw new Error(r.status); return r.json(); }
+
+    function recalcTotalLoss() {
+        let waterGap = waterWithoutCount * WATER_FEE;
+        let resWasteGap = wasteWithoutFeaturesRaw.length * WASTE_RES;
+        let comWasteGap = commercialWasteWithoutFeaturesRaw.length * WASTE_COM;
+        let craftsGap = craftsFeaturesRaw.length * CRAFTS_FEE;
+        let total = waterGap + resWasteGap + comWasteGap + craftsGap;
+        const el = document.getElementById('totalOverallLoss');
+        if (isAuthorized) {
+            el.innerText = total.toLocaleString() + ' ₪';
+        } else {
+            el.innerHTML = '<span class="loss-locked-overlay" onclick="event.stopPropagation(); openAuthModal(() => refreshAllPopups())"><i class="fas fa-lock"></i> خاص</span>';
+        }
+    }
+    function updateTotalLoss() { recalcTotalLoss(); }
+
+    let lastTypeMap = null;
+
+    function processAllData(geoJson) {
+        const allFeatures = geoJson.features || [];
+        allUnitsRaw = allFeatures;
+        const usedFeatures = filterUsed(allFeatures);
+        usedUnits = usedFeatures;
+        document.getElementById('totalBuildings').innerText = buildingsGeoJSON?.features?.length || 0;
+        document.getElementById('totalUnitsAll').innerText = allFeatures.length;
+
+        totalComIndTour = usedFeatures.filter(u => ['تجاري','صناعي','سياحي'].includes(getUnitType(u.properties))).length;
+
+        const typeMap = new Map();
+        allFeatures.forEach(f => { let t = getUnitType(f.properties); typeMap.set(t, (typeMap.get(t)||0)+1); });
+        lastTypeMap = typeMap;
+        renderCategoriesChart(typeMap);
+        drawUsageChart(usedFeatures.length, allFeatures.length - usedFeatures.length);
+        updateChartLocks();
+
+        const waterWith = usedFeatures.filter(f => f.properties?.final_wate && f.properties.final_wate.trim() !== '');
+        waterWithoutFeaturesRaw = usedFeatures.filter(f => !f.properties?.final_wate || f.properties.final_wate.trim() === '');
+        waterWithCount = waterWith.length;
+        waterWithoutCount = waterWithoutFeaturesRaw.length;
+
+        waterWithLayer = L.geoJSON({type:'FeatureCollection',features:waterWith},{
+            pointToLayer:(f,ll)=>L.marker(ll,{icon:ICONS.waterWith()}),
+            onEachFeature:(f,l)=>l.bindPopup(buildFullPopup(f.properties,'💧 مع مياه','<span class="popup-badge badge-water">مع مياه</span>', ''), {className:'enhanced-popup',maxWidth:460,minWidth:340})
+        });
+        waterWithoutLayer = L.geoJSON({type:'FeatureCollection',features:waterWithoutFeaturesRaw},{
+            pointToLayer:(f,ll)=>L.marker(ll,{icon:ICONS.waterWithout()}),
+            onEachFeature:(f,l)=>l.bindPopup(buildFullPopup(f.properties,'🚫 بدون مياه','<span class="popup-badge badge-danger">فجوة 1,200₪</span>', ''), {className:'enhanced-popup',maxWidth:460,minWidth:340})
+        });
+        waterWithLayer.addTo(map);
+        waterWithoutLayer.addTo(map);
+
+        if (isAuthorized) {
+            unlockDashboardNumbers();
+        }
+        drawPie('waterAllPieChart', [waterWithCount, waterWithoutCount], ['#3b82f6','#ef4444']);
+        updateTotalLoss();
+    }
+
+    async function initWasteLayers() {
+        try {
+            const resUrl = 'https://raw.githubusercontent.com/maysnasser/SITE/main/%D8%B3%D9%83%D9%86%D9%8A%20%D8%A8%D9%84%D8%A7%20%D9%86%D9%81%D8%A7%D9%8A%D8%A7%D8%AA.json';
+            const comUrl = 'https://raw.githubusercontent.com/maysnasser/SITE/main/%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A%20%D8%B5%D9%86%D8%A7%D8%B9%D9%8A%20%D8%B3%D9%8A%D8%A7%D8%AD%D9%8A%20%D8%A8%D9%84%D8%A7%20%D9%86%D9%81%D8%A7%D9%8A%D8%A7%D8%AA.json';
+            const [resData, comData] = await Promise.all([fetchJSON(resUrl), fetchJSON(comUrl)]);
+            wasteWithoutFeaturesRaw = filterUsed(resData.features || []);
+            commercialWasteWithoutFeaturesRaw = filterUsed(comData.features || []);
+
+            resWasteWithoutLayer = L.geoJSON({type:'FeatureCollection',features:wasteWithoutFeaturesRaw},{
+                pointToLayer:(f,ll)=>L.marker(ll,{icon:ICONS.resWaste()}),
+                onEachFeature:(f,l)=>l.bindPopup(buildFullPopup(f.properties,'🏠 سكني بدون نفايات','<span class="popup-badge badge-danger">فجوة 300₪</span>', ''), {className:'enhanced-popup',maxWidth:460,minWidth:340})
+            });
+            commercialWasteWithoutLayer = L.geoJSON({type:'FeatureCollection',features:commercialWasteWithoutFeaturesRaw},{
+                pointToLayer:(f,ll)=>L.marker(ll,{icon:ICONS.comWaste()}),
+                onEachFeature:(f,l)=>l.bindPopup(buildFullPopup(f.properties,'🏢 تجاري/صناعي بدون نفايات','<span class="popup-badge badge-danger">فجوة 600₪</span>', ''), {className:'enhanced-popup',maxWidth:460,minWidth:340})
+            });
+            resWasteWithoutLayer.addTo(map);
+            commercialWasteWithoutLayer.addTo(map);
+
+            if (isAuthorized) unlockDashboardNumbers();
+            drawPie('wastePieChart', [1838 - wasteWithoutFeaturesRaw.length, wasteWithoutFeaturesRaw.length], ['#10b981','#ef4444']);
+            drawPie('comWastePieChart', [totalComIndTour - commercialWasteWithoutFeaturesRaw.length, commercialWasteWithoutFeaturesRaw.length], ['#10b981','#ef4444']);
+            updateTotalLoss();
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadCraftsLayer() {
+        try {
+            const craftsUrl = 'https://raw.githubusercontent.com/maysnasser/SITE/main/%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A%20%D8%B5%D9%86%D8%A7%D8%B9%D9%8A%20%D8%B3%D9%8A%D8%A7%D8%AD%D9%8A%20%D8%A8%D9%84%D8%A7%20%D8%AD%D8%B1%D9%81%20%D9%88%D8%B5%D9%86%D8%A7%D8%B9%D8%A7%D8%AA.json';
+            const data = await fetchJSON(craftsUrl);
+            craftsFeaturesRaw = data.features || [];
+            craftsLayer = L.geoJSON({type:'FeatureCollection',features:craftsFeaturesRaw},{
+                pointToLayer:(f,ll)=>L.marker(ll,{icon:ICONS.crafts()}),
+                onEachFeature:(f,l)=>l.bindPopup(buildFullPopup(f.properties,'⚙️ حرف وصناعات بدون اشتراك','<span class="popup-badge badge-danger">فجوة 120₪</span>', ''), {className:'enhanced-popup',maxWidth:460,minWidth:340})
+            });
+            craftsLayer.addTo(map);
+            if (isAuthorized) unlockDashboardNumbers();
+            drawPie('craftsPieChart', [Math.max(0,totalComIndTour-craftsFeaturesRaw.length), craftsFeaturesRaw.length], ['#a855f7','#ef4444']);
+            updateTotalLoss();
+        } catch(e) {
+            console.error(e);
+            craftsFeaturesRaw = [];
+            drawPie('craftsPieChart', [totalComIndTour, 0], ['#a855f7','#ef4444']);
+            updateTotalLoss();
+        }
+    }
+
+    function exportFeatureCollection(features, filename) {
+        if(!features.length){alert("لا توجد بيانات");return;}
+        const allKeys=new Set();
+        features.forEach(f=>{Object.keys(f.properties||{}).forEach(k=>{if(!isHiddenField(k)) allKeys.add(k);});});
+        const headers=Array.from(allKeys);
+        const rows=features.map(f=>headers.map(h=>f.properties?.[h]||''));
+        const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,"بيانات");
+        XLSX.writeFile(wb,`${filename}_${new Date().toISOString().slice(0,19)}.xlsx`);
+    }
+
+    function openSideModal(title, items, layerType) {
+        const modal=document.getElementById('sideModal');
+        const tbody=document.getElementById('sideTableBody');
+        const thead=document.getElementById('sideTableHead');
+        const meta=document.getElementById('sideModalMeta');
+        document.getElementById('sideModalTitle').innerHTML=title;
+        tbody.innerHTML=''; thead.innerHTML='';
+        if(!items||items.length===0){
+            tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:20px;color:#94a3b8;">لا توجد بيانات</td></tr>';
+            modal.classList.add('open');
+            return;
+        }
+        const allKeys=new Set();
+        items.forEach(item=>{Object.keys(item.properties||{}).forEach(k=>{if(!isHiddenField(k)) allKeys.add(k);});});
+        const keys=Array.from(allKeys);
+
+        let feeValue=0;
+        if(layerType==='water') feeValue=WATER_FEE;
+        else if(layerType==='resWaste') feeValue=WASTE_RES;
+        else if(layerType==='comWaste') feeValue=WASTE_COM;
+        else if(layerType==='crafts') feeValue=CRAFTS_FEE;
+
+        const gapStr = isAuthorized
+            ? `<span style="color:#6ee7b7;font-weight:800;">${(items.length * feeValue).toLocaleString()} ₪</span>`
+            : `<span style="color:#fca5a5;"><i class="fas fa-lock"></i> خاص — <a href="#" onclick="event.preventDefault(); openAuthModal(()=>{ openSideModal('${title.replace(/'/g,"\\'")}', items, '${layerType}'); })" style="color:#d4af37;text-decoration:underline;">دخول المخوّلين</a></span>`;
+        meta.innerHTML=`إجمالي السجلات: <span style="color:#d4af37;font-weight:800;">${items.length}</span> &nbsp;|&nbsp; الفجوة لكل وحدة: <span style="color:#d4af37;font-weight:800;">${feeValue.toLocaleString()} ₪</span> &nbsp;|&nbsp; الفجوة الكلية: ${gapStr} <br><span style="font-size:0.62rem;opacity:0.75;">* الأرقام تعود لفترة الإحصاء، وقد تخضع للمراجعة والتدقيق.</span>`;
+
+        const headerRow=thead.insertRow();
+        headerRow.appendChild(Object.assign(document.createElement('th'), {innerText:'#'}));
+        keys.forEach(k=>{
+            const th=document.createElement('th');
+            if (isSensitiveField(k) && !isAuthorized) {
+                th.innerHTML = getFieldLabel(k) + ' <i class="fas fa-lock" style="font-size:0.5rem;color:#fca5a5;"></i>';
+            } else {
+                th.innerText = getFieldLabel(k);
+            }
+            headerRow.appendChild(th);
+        });
+        headerRow.appendChild(Object.assign(document.createElement('th'), {innerText:'تحديد'}));
+
+        items.forEach((item,idx)=>{
+            const props=item.properties||{};
+            const row=tbody.insertRow();
+            row.insertCell(0).innerText=idx+1;
+            keys.forEach(k=>{
+                const td=row.insertCell();
+                const val=props[k];
+                if (isSensitiveField(k) && !isAuthorized) {
+                    td.innerHTML = '<span class="secret-locked" onclick="event.stopPropagation(); openAuthModal(()=>refreshAllPopups())"><i class="fas fa-lock"></i> معلومات خاصة</span>';
+                } else if(val===null||val===undefined||val==='') {
+                    td.innerHTML='—';
+                } else {
+                    td.innerText=val;
+                }
+            });
+            const td=row.insertCell();
+            const btn=document.createElement('button');
+            btn.innerHTML='<i class="fas fa-map-marker-alt"></i>';
+            btn.className='locate-sm-btn';
+            const coords=item.geometry?.coordinates;
+            if(coords){
+                const lat=coords[1], lng=coords[0];
+                btn.onclick=()=>{
+                    modal.classList.remove('open');
+                    map.flyTo([lat,lng],19,{animate:true,duration:1.2});
+                    setTimeout(()=>{
+                        L.popup({className:'enhanced-popup',maxWidth:460,minWidth:340})
+                            .setLatLng([lat,lng])
+                            .setContent(buildFullPopup(props,`📍 وحدة #${props.id||idx+1}`,'', ''))
+                            .openOn(map);
+                    },1300);
+                };
+            } else { btn.disabled=true; btn.style.opacity='0.3'; }
+            td.appendChild(btn);
+        });
+        modal.classList.add('open');
+    }
+
+    function drawPie(id, data, colors) {
+        const ctx=document.getElementById(id)?.getContext('2d');
+        if(!ctx) return;
+        const existing=Chart.getChart(id);
+        if(existing) existing.destroy();
+        new Chart(ctx,{
+            type:'pie',
+            data:{labels:['مع اشتراك','بدون اشتراك'],datasets:[{data,backgroundColor:colors}]},
+            options:{plugins:{legend:{labels:{color:'#a0aec0',font:{family:'Cairo'}}}}}
+        });
+    }
+    function drawUsageChart(used,unused){
+        const ctx=document.getElementById('usageChart')?.getContext('2d');
+        if(!ctx) return;
+        const existing=Chart.getChart('usageChart');
+        if(existing) existing.destroy();
+        new Chart(ctx,{
+            type:'bar',
+            data:{labels:['الوحدات المستخدمة','الوحدات غير المستخدمة'],datasets:[{label:'عدد الوحدات',data:[used,unused],backgroundColor:['#22d3c8','#f97316'],borderRadius:10}]},
+            options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}`}}},scales:{y:{ticks:{color:'#a0aec0'},grid:{color:'rgba(255,255,255,0.05)'}},x:{ticks:{color:'#a0aec0',font:{family:'Cairo'}}}}}
+        });
+    }
+
+    // ✅ دالة الشارت - إخفاء الأرقام فوق الأعمدة للزوار العاديين
+    function renderCategoriesChart(mapData){
+        const ctx=document.getElementById('categoriesChart').getContext('2d');
+        if(categoriesChart) categoriesChart.destroy();
+        const entries=Array.from(mapData.entries()).filter(([l])=>l!=='غير مستخدم');
+        const labels=entries.map(e=>e[0]);
+        const data=entries.map(e=>e[1]);
+        const total=data.reduce((a,b)=>a+b,0);
+        const colors=['#2dd4bf','#facc15','#a855f7','#3b82f6','#ec489a','#14b8a6','#f97316','#ef4444'];
+        categoriesChart=new Chart(ctx,{
+            type:'bar',
+            data:{labels,datasets:[{label:'عدد الوحدات',data,backgroundColor:colors.slice(0,labels.length),borderRadius:12}]},
+            options:{
+                responsive:true, maintainAspectRatio:true,
+                plugins:{
+                    legend:{display:false},
+                    tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${((c.raw/total)*100).toFixed(1)}%)`}}
+                },
+                scales:{y:{ticks:{color:'#a0aec0'},grid:{color:'rgba(255,255,255,0.05)'}},x:{ticks:{color:'#a0aec0',font:{family:'Cairo'}}}}
+            },
+            plugins:[{
+                id:'barLabels',
+                afterDatasetsDraw(chart){
+                    // ✅ لا نرسم الأرقام إلا إذا كان المستخدم مصرحاً
+                    if (!isAuthorized) return;
+                    const{ctx,data}=chart;
+                    chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+                        const v=data.datasets[0].data[i];
+                        const pct=((v/total)*100).toFixed(1);
+                        ctx.save();
+                        ctx.font='bold 11px Cairo';
+                        ctx.fillStyle='#f5e6b0';
+                        ctx.textAlign='center';
+                        ctx.fillText(`${v} (${pct}%)`, bar.x, bar.y-6);
+                        ctx.restore();
+                    });
+                }
+            }]
+        });
+    }
+
+    function setupEvents() {
+        document.getElementById('zoomInBtn').onclick=()=>map.zoomIn();
+        document.getElementById('zoomOutBtn').onclick=()=>map.zoomOut();
+        document.getElementById('fullscreenBtn').onclick=()=>document.documentElement.requestFullscreen();
+        document.getElementById('openGalleryBtn').onclick=()=>document.getElementById('photosPanel').classList.add('active');
+        document.getElementById('closePhotosBtn').onclick=()=>document.getElementById('photosPanel').classList.remove('active');
+
+        document.querySelectorAll('.layer-option').forEach(btn=>btn.addEventListener('click',()=>{
+            const l=btn.dataset.layer;
+            map.removeLayer(tileProviders[activeBase]);
+            tileProviders[l].addTo(map);
+            activeBase=l;
+            document.querySelectorAll('.layer-option').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+        }));
+
+        const toggle=(layer,btn)=>{
+            if(!layer) return;
+            if(map.hasLayer(layer)) map.removeLayer(layer);
+            else layer.addTo(map);
+            btn.classList.toggle('active');
+        };
+        document.getElementById('toggleWaterWith').onclick=function(){ toggle(waterWithLayer,this); };
+        document.getElementById('toggleWaterWithout').onclick=function(){ toggle(waterWithoutLayer,this); };
+        document.getElementById('toggleResWasteWithout').onclick=function(){ toggle(resWasteWithoutLayer,this); };
+        document.getElementById('toggleComWasteWithout').onclick=function(){ toggle(commercialWasteWithoutLayer,this); };
+        document.getElementById('toggleCraftsLayer').onclick=function(){ toggle(craftsLayer,this); };
+
+        document.getElementById('exportExcelBtn').onclick=()=>requireAuthThen(()=>{ if(allUnitsRaw.length) exportFeatureCollection(allUnitsRaw, "كل_الوحدات"); else alert("لا توجد بيانات"); });
+        document.getElementById('exportWaterWithoutExcel').onclick=()=>requireAuthThen(()=>{ if(waterWithoutFeaturesRaw.length) exportFeatureCollection(waterWithoutFeaturesRaw, "بدون_مياه"); else alert("لا توجد بيانات"); });
+        document.getElementById('exportResWasteExcel').onclick=()=>requireAuthThen(()=>{ if(wasteWithoutFeaturesRaw.length) exportFeatureCollection(wasteWithoutFeaturesRaw, "سكني_بدون_نفايات"); else alert("لا توجد بيانات"); });
+        document.getElementById('exportComWasteExcel').onclick=()=>requireAuthThen(()=>{ if(commercialWasteWithoutFeaturesRaw.length) exportFeatureCollection(commercialWasteWithoutFeaturesRaw, "تجاري_بدون_نفايات"); else alert("لا توجد بيانات"); });
+        document.getElementById('exportCraftsExcel').onclick=()=>requireAuthThen(()=>{ if(craftsFeaturesRaw.length) exportFeatureCollection(craftsFeaturesRaw, "حرف_وصناعات_بدون_اشتراك"); else alert("لا توجد بيانات"); });
+
+        document.getElementById('waterWithoutStat').onclick=()=>requireAuthThen(()=>openSideModal('🚫 وحدات بدون اشتراك مياه', waterWithoutFeaturesRaw, 'water'));
+        document.getElementById('wasteWithoutStat').onclick=()=>requireAuthThen(()=>openSideModal('🏠 سكني بدون اشتراك نفايات', wasteWithoutFeaturesRaw, 'resWaste'));
+        document.getElementById('comWasteWithoutStat').onclick=()=>requireAuthThen(()=>openSideModal('🏢 تجاري/صناعي/سياحي بدون اشتراك نفايات', commercialWasteWithoutFeaturesRaw, 'comWaste'));
+        document.getElementById('craftsWithoutStat').onclick=()=>requireAuthThen(()=>openSideModal('⚙️ وحدات الحرف والصناعات بدون اشتراك', craftsFeaturesRaw, 'crafts'));
+        document.getElementById('craftsDetailsBtn').onclick=()=>requireAuthThen(()=>openSideModal('⚙️ تفاصيل الحرف والصناعات (كل الحقول)', craftsFeaturesRaw, 'crafts'));
+        document.getElementById('closeSideModalBtn').onclick=()=>document.getElementById('sideModal').classList.remove('open');
+        window.onclick=(e)=>{
+            const m=document.getElementById('sideModal');
+            if(e.target===m) m.classList.remove('open');
+        };
+
+        document.getElementById('authCloseBtn').onclick = closeAuthModal;
+        document.getElementById('authSubmitBtn').onclick = () => {
+            const input = document.getElementById('authCodeInput');
+            if (input.value.trim() === AUTH_TOKEN) {
+                isAuthorized = true;
+                document.getElementById('authModal').classList.remove('open');
+                document.getElementById('authActiveBadge').classList.add('show');
+                unlockExports();
+                refreshAllPopups();
+            } else {
+                document.getElementById('authErrorMsg').textContent = 'رمز الدخول غير صحيح. يرجى المحاولة مرة أخرى.';
+                input.value = '';
+                input.focus();
+            }
+        };
+        document.getElementById('authCodeInput').onkeydown = (e) => {
+            if (e.key === 'Enter') document.getElementById('authSubmitBtn').click();
+        };
+
+        document.getElementById('totalLossCard').addEventListener('click', () => {
+            if (!isAuthorized) openAuthModal(() => refreshAllPopups());
+        });
+
+        ['waterGapBox','wasteGapBox','comGapBox','craftsGapBox'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', () => {
+                    if (!isAuthorized) openAuthModal(() => refreshAllPopups());
+                });
+            }
+        });
+    }
+
+    async function bootstrap() {
+        initMap();
+        await loadPhotosData();
+        try {
+            const buildingsUrl='https://raw.githubusercontent.com/maysnasser/SITE/main/%D8%A7%D9%84%D9%85%D8%A8%D8%A7%D9%86%D9%8A.json';
+            const unitsUrl='https://raw.githubusercontent.com/maysnasser/SITE/main/Final_units_displaced.geojson';
+            let allUnitsGeoJSON;
+            [buildingsGeoJSON, allUnitsGeoJSON]=await Promise.all([fetchJSON(buildingsUrl), fetchJSON(unitsUrl)]);
+            processAllData(allUnitsGeoJSON);
+            if(buildingsGeoJSON) {
+                L.geoJSON(buildingsGeoJSON, {
+                    style: { color: '#d4af37', weight: 2, fillColor: '#3b82f6', fillOpacity: 0.15, opacity: 0.9 },
+                    onEachFeature: (feature, layer) => {
+                        const buildingId = feature.properties.id;
+                        layer.bindPopup(createBeautifulPopup(feature.properties, buildingId), {
+                            className: 'enhanced-popup', maxWidth: 460, minWidth: 340
+                        });
+                    }
+                }).addTo(map);
+            }
+            await initWasteLayers();
+            await loadCraftsLayer();
+            setupEvents();
+        } catch(e){ console.error(e); alert('خطأ في تحميل البيانات'); }
+    }
+</script>
+</body>
+</html>
